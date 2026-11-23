@@ -8,6 +8,7 @@ It reads Orca directly (`workspace.readContext`, `workspace.list`, `agents.list`
 workspace events). No API key, no account, no config file, no network calls.
 
 - Directory page: https://orca.dev/plugins/SteinLabz/octopus
+- Promo kit (links, brief, 4 screenshots, X thread): [PROMO.md](PROMO.md)
 - License: MIT
 
 ---
