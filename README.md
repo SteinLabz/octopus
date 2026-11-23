@@ -1,34 +1,34 @@
-# Team Mode · Run Monitor
+# Octopus
 
-An [Orca](https://github.com/stablyai/orca) plugin that renders a live-looking dashboard for
-round-based multi-agent collaboration: the members of a run, a **Data Flow** map between the
-actors and the collaboration parts, the **Task board**, **Plan approval**, **Team board** and
-**File claims**, plus a feed of the latest flows.
+An [Orca](https://github.com/stablyai/orca) sidebar panel for round-based multi-agent
+collaboration. It shows the members of a run, a **Data Flow** map between the actors and the
+shared parts (Brief, Task board, Plan approval, Team board, File claims), and a feed of the
+latest flows. Clicking a part, a flow, or *All flows (68)* opens a detail drawer.
 
-The UI is reproduced faithfully from the reference design and works in two ways:
+Octopus ships with a faithful demo run (`RTEAMDEM01`) so the UI is useful out of the box.
+The worker exposes a documented data contract: replace `SNAPSHOT` with your own team runtime
+and the panel renders it without any UI changes.
 
-- **Inside Orca** — the worker answers `team.data` and the panel refreshes on `team.updated`
-  events (and every 35 s). Clicking a part, a flow, or *All flows (68)* opens a detail drawer.
-- **Standalone** — open `panel/index.html` in any browser. It falls back to an embedded demo
-  snapshot, so the whole dashboard still renders with no Orca runtime.
+- Directory page: https://orca.dev/plugins/SteinLabz/octopus
+- License: MIT
 
-## Layout
+## Install
 
-```
-orca-plugin.json        manifest (panel + worker, read capabilities)
-panel/index.html        the complete UI: inline CSS, SVG wiring, interactions
-src/snapshot.ts         demo run data and the shared types
-src/worker.ts           serves team.data, posts team.updated
-src/protocol.ts         panel <-> worker request/event contract
-src/worker.test.ts      worker test (orca/testing)
-src/panel.check.ts      panel check scenario
+From the directory page above, once the `v1.0.0` release is indexed, copy the install URL and
+paste it into Orca. Or install straight from GitHub:
+
+```sh
+orca plugin install SteinLabz/octopus --json
 ```
 
-## Data contract
+Orca asks for approval before running it: the plugin runs a trusted worker and subscribes to
+agent and workspace status changes so the panel can refresh. It requests only `agent:read` and
+`workspace:read`. No network calls, no analytics, no secrets.
+
+## What the data looks like
 
 `team.data` returns the `Snapshot` from `src/snapshot.ts` plus `generatedAt`. Times are relative
-offsets (`agoMs`) so the panel can tick them live. To wire a real team runtime, replace
-`SNAPSHOT` in `src/worker.ts` with your own source — keep the shape and the panel does the rest:
+offsets (`agoMs`) so the panel can tick them live:
 
 ```ts
 {
@@ -47,6 +47,19 @@ offsets (`agoMs`) so the panel can tick them live. To wire a real team runtime, 
 
 Part ids: `brief`, `board`, `approval`, `teamboard`, `claims`.
 
+## Layout
+
+```
+orca-plugin.json        manifest (panel + worker, metadata, cover/screenshot)
+assets/                 icon, cover and screenshot for the directory page
+panel/index.html        the complete UI: inline CSS, SVG wiring, interactions, demo fallback
+src/snapshot.ts         demo run data and the shared types
+src/worker.ts           serves team.data, posts team.updated
+src/protocol.ts         panel <-> worker request/event contract
+src/worker.test.ts      worker test (orca/testing)
+src/panel.check.ts      panel check scenario
+```
+
 ## Develop
 
 ```sh
@@ -54,28 +67,41 @@ orca plugin validate .
 orca plugin test .
 orca plugin check .
 orca plugin dev watch .    # loads the folder into Orca and prints reloads/logs; Ctrl-C unloads
-orca plugin open local.team-mode-panel --panel team-run
+orca plugin open local.octopus --panel team-run
 ```
-
-The plugin needs approval because it runs a trusted worker and subscribes to agent/workspace
-status changes. Grant it yourself in Orca's approval prompt.
 
 Useful commands:
 
 ```sh
 orca plugin dev request . team.data --json    # inspect the live snapshot
-orca plugin logs local.team-mode-panel --json
+orca plugin logs local.octopus --json
 orca plugin inspect . --json                  # contributions and access
+orca plugin shot local.octopus --panel team-run --json
 ```
 
 ## Standalone preview
 
+`panel/index.html` also works on its own: with no Orca runtime it falls back to the embedded
+demo snapshot, so the whole dashboard renders in any browser.
+
 ```sh
-# just open the file in a browser
 start panel/index.html          # Windows
 open panel/index.html           # macOS
 xdg-open panel/index.html       # Linux
 ```
+
+## Release
+
+The directory page picks up a release from a `vX.Y.Z` git tag:
+
+```sh
+orca plugin validate .
+git tag -a v1.0.0 -m v1.0.0
+git push origin v1.0.0
+```
+
+Then check https://orca.dev/plugins/SteinLabz/octopus (the indexer runs every 30 minutes and
+GitHub search can take a few more minutes to see a new topic).
 
 ## License
 

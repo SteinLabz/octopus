@@ -5,7 +5,7 @@ import type { OrcaWorkerApi } from 'orca/worker'
 import { SNAPSHOT } from './snapshot'
 
 export default function activate(orca: OrcaWorkerApi): void {
-  orca.log('Team mode monitor activado')
+  orca.log('Octopus monitor activado')
 
   orca.panels.handle('team.data', async () => ({
     ...SNAPSHOT,
