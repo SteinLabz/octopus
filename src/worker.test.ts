@@ -30,6 +30,7 @@ test('builds the snapshot from the real focused workspace', async () => {
 
   const worker = await mountWorker(main, { host })
   const data: any = await worker.request('team.data')
+  assert.equal(data.source, 'live')
   assert.equal(data.title, 'Jefe · Bots')
   assert.equal(data.team, 'Rama · main')
   assert.equal(data.members.length, 2)
@@ -46,5 +47,6 @@ test('falls back to the demo run when Orca has no workspace', async () => {
   const worker = await mountWorker(main, { host })
   const data: any = await worker.request('team.data')
   assert.equal(data.run, 'RTEAMDEM01')
+  assert.equal(data.source, 'demo')
   await worker.deactivate()
 })

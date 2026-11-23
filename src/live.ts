@@ -208,6 +208,7 @@ export async function buildLive(orca: OrcaWorkerApi): Promise<Snapshot | null> {
   const hot = flows.filter(f => f.agoMs < 30000).map(f => `${f.actor}>${f.part}`)
 
   return {
+    source: 'live',
     title: displayName,
     team: branch !== '—' ? `Rama · ${branch}` : 'Workspace local',
     active: active.length > 0 || working.length > 0,

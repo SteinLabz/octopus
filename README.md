@@ -16,7 +16,7 @@ panel HTML does not change.
 
 ## Install
 
-From the directory page above, once the `v1.1.0` release is indexed, copy the install URL and
+From the directory page above, once the `v1.2.0` release is indexed, copy the install URL and
 paste it into Orca. Or install straight from GitHub:
 
 ```sh
@@ -27,6 +27,43 @@ Orca asks for approval before running it: the plugin runs a trusted worker and s
 agent and workspace status changes so the panel can refresh. It requests only `agent:read` and
 `workspace:read`. No network calls, no analytics, no secrets. Requires Orca 1.4.260+.
 
+## Real data vs demo — read this first
+
+Octopus always tells you which data you are looking at:
+
+- **LIVE** (green dot beside *DATA FLOW*): your real workspace. The *Fuente de datos* line says
+  "Datos reales del workspace enfocado de Orca…", the title is your workspace name, and the
+  badge shows its Git branch.
+- **DEMO** (amber dot plus a banner): the bundled example run. Nothing is being read from your
+  machine yet.
+
+To go from DEMO to LIVE:
+
+1. Open a **workspace** in Orca — a Git worktree under one of your projects, or a folder
+   workspace. Settings and full-page tabs do not count.
+2. Have at least one **agent** open in it (a chat or a terminal).
+3. **Click that workspace in Orca's left sidebar.** This is the step people miss: Octopus follows
+   the *focused* workspace, not the most recently used one.
+4. Press **Refresh** in Octopus. The badge turns green and the header shows your workspace.
+
+Nothing else is needed: no API key, no config file, no extra permission. The two permissions you
+already approved on install (`agent:read` and `workspace:read`) are enough.
+
+| What you see in Octopus | Real source |
+| --- | --- |
+| Title / branch badge | Focused workspace name and Git branch |
+| Members | Agents in that workspace: CLI, state and dispatched task |
+| Brief | Terminals open in the focused workspace |
+| Task board | All worktrees, with state and unread flag |
+| Plan approval | Blocked agents + worktrees with unread messages |
+| Team board | Agents with their live state |
+| File claims | Git branches held by each worktree |
+| Latest flows | Agent status changes and worktree activity |
+
+Still DEMO? Focus the workspace in the sidebar and press Refresh; open an agent there; then check
+`orca plugin logs local.octopus --json` and confirm both permissions are enabled under
+Settings → Plugins → Octopus.
+
 ## What the data looks like
 
 `team.data` returns the `Snapshot` from `src/snapshot.ts` plus `generatedAt`. In live mode
@@ -36,6 +73,7 @@ and flows. Times are relative offsets (`agoMs`) so the panel can tick them live:
 
 ```ts
 {
+  source: 'live' | 'demo',
   title, team, active, round, plansNeedApproval,
   run, lead, language, created, lastChangeMs, runningForMs,
   whyIntro, why,
@@ -101,8 +139,8 @@ The directory page picks up a release from a `vX.Y.Z` git tag:
 
 ```sh
 orca plugin validate .
-git tag -a v1.1.0 -m v1.1.0
-git push origin v1.1.0
+git tag -a v1.2.0 -m v1.2.0
+git push origin v1.2.0
 ```
 
 Then check https://orca.dev/plugins/SteinLabz/octopus (the indexer runs every 30 minutes and

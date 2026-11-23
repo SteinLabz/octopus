@@ -43,6 +43,8 @@ export interface Actor {
 }
 
 export interface Snapshot {
+  /** 'live' when built from Orca's focused workspace, 'demo' for the bundled fallback. */
+  source: 'live' | 'demo'
   title: string
   team: string
   active: boolean
@@ -67,6 +69,7 @@ export interface Snapshot {
 }
 
 export const SNAPSHOT: Snapshot = {
+  source: 'demo',
   title: 'Dark mode for the settings page',
   team: 'Team · MA-08',
   active: true,
