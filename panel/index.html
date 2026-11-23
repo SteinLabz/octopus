@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Team mode · Run monitor</title>
+<style>
+  :root{
+    --bg:#0d0f11; --card:#141618; --card2:#171a1d; --line:#262a2e; --line2:#343940;
+    --txt:#e7e9ec; --muted:#979da4; --dim:#6d747b;
+    --blue:#5b9cff; --green:#46cf95; --amber:#f2b84b; --red:#ff7183;
+    --violet:#a78bfa; --pink:#f277a4; --cyan:#54c7ec;
+    --sans:Inter,"Segoe UI",system-ui,-apple-system,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:12px;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;color:inherit;cursor:pointer}
+  .wrap{max-width:1320px;margin:0 auto;padding:18px 20px 26px}
+  svg{display:block}
+
+  /* header */
+  .head{display:flex;align-items:center;gap:11px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .mark{width:34px;height:34px;flex:0 0 34px;border-radius:9px;background:#1d293d;border:1px solid #34445f;display:grid;place-items:center;color:#8cb6ff}
+  .htext h1{margin:0;font-size:17px;font-weight:650;letter-spacing:-.3px;line-height:1.2}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .badge{font-size:10px;line-height:1;padding:4px 8px;border-radius:11px;white-space:nowrap}
+  .b-team{background:#3556c4;color:#fff;font-weight:600}
+  .b-active{background:rgba(70,207,149,.12);color:var(--green);display:flex;align-items:center;gap:5px}
+  .b-active i{width:5px;height:5px;border-radius:50%;background:var(--green)}
+  .b-round{background:#1d2024;border:1px solid var(--line2);color:var(--muted)}
+  .b-plan{background:rgba(242,184,75,.12);color:var(--amber);display:flex;align-items:center;gap:5px}
+  .head-right{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:11px;color:var(--muted);white-space:nowrap}
+  .refresh{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line2);border-radius:7px;padding:6px 10px;font-size:11px;color:var(--txt)}
+  .refresh:hover{border-color:var(--blue);color:var(--blue)}
+  .refresh svg{transition:transform .5s}
+  .refresh.spin svg{transform:rotate(360deg)}
+
+  /* stats */
+  .meta{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--line);padding:13px 0 14px}
+  .meta>div{padding:0 15px;border-right:1px solid var(--line)}
+  .meta>div:first-child{padding-left:0}
+  .meta>div:last-child{border-right:0}
+  .meta label{display:block;font-size:9px;letter-spacing:.13em;color:var(--dim);text-transform:uppercase;margin-bottom:5px}
+  .meta .v{font-size:12px;color:var(--txt)}
+  .meta .v .lead-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--blue);margin-right:6px;vertical-align:1px}
+
+  .why{padding:14px 0 13px;font-size:12px;color:var(--muted);line-height:1.5}
+  .why b{color:var(--txt);font-weight:650;margin-right:9px}
+  .sec{font-size:10px;font-weight:700;letter-spacing:.13em;color:var(--muted);text-transform:uppercase}
+
+  /* members */
+  .members{margin-bottom:15px}
+  .member-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:9px}
+  .member{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 10px 10px;min-width:0}
+  .m-top{display:flex;align-items:center;gap:8px}
+  .av{width:23px;height:23px;flex:0 0 23px;border-radius:6px;display:grid;place-items:center;background:rgba(255,255,255,.05);border:1px solid var(--line2);color:var(--ac)}
+  .m-name{font-weight:650;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pill{margin-left:auto;font-size:10px;padding:2px 8px;border-radius:10px;white-space:nowrap}
+  .pill.working{color:var(--amber);background:rgba(242,184,75,.10)}
+  .pill.replaced{color:var(--dim);background:rgba(255,255,255,.04)}
+  .pill.idle{color:var(--blue);background:rgba(91,156,255,.08);border:1px solid rgba(91,156,255,.25)}
+  .pill.needs-you{color:var(--red);background:rgba(255,113,131,.09)}
+  .m-meta{font:10px var(--mono);color:var(--dim);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* flow card */
+  .flow-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 15px 13px}
+  .flow-head .live{margin-left:9px;color:var(--green);font-weight:700;letter-spacing:.13em;display:inline-flex;align-items:center;gap:5px}
+  .flow-head .live i{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green)}
+  .flow-desc{font-size:11px;color:var(--dim);margin:8px 0 13px;line-height:1.45}
+  .flow-body{display:grid;grid-template-columns:minmax(0,1fr) 318px;gap:15px}
+
+  .diagram{position:relative;display:grid;grid-template-columns:168px minmax(50px,1fr) minmax(290px,1fr);gap:5px;align-items:center;min-height:312px}
+  #wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible}
+  .actors,.parts{position:relative;z-index:2}
+  .actors{grid-column:1;display:flex;flex-direction:column;gap:11px}
+  .parts{grid-column:3;display:flex;flex-direction:column;gap:8px}
+
+  .actor{height:47px;background:var(--card2);border:1px solid var(--line);border-radius:7px;display:flex;align-items:center;gap:9px;padding:0 9px}
+  .actor .ic{width:27px;height:27px;flex:0 0 27px;border-radius:7px;display:grid;place-items:center;background:rgba(255,255,255,.045);border:1px solid var(--line2);color:var(--ac)}
+  .actor b{font-size:12px;font-weight:650;white-space:nowrap}
+  .actor .sub{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);white-space:nowrap}
+  .actor .more{color:var(--dim);font-size:11px;letter-spacing:1px;margin-right:1px}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--dim);flex:0 0 6px}
+  .dot.working{background:var(--green);box-shadow:0 0 6px var(--green)}
+  .dot.idle{background:#3f9f7d}
+  .dot.needs-you{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+
+  .part{position:relative;background:var(--card2);border:1px solid var(--line);border-left:2px solid var(--pc);border-radius:7px;padding:8px 10px 9px;cursor:pointer;min-width:0}
+  .part:hover{border-color:var(--pc)}
+  .pt{display:flex;align-items:center;gap:7px}
+  .pi{width:15px;height:15px;flex:0 0 15px;color:var(--pc);display:grid;place-items:center}
+  .pn{font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .p-chevr{margin-left:auto;color:var(--dim);font-size:15px;line-height:1}
+  .p-live{width:6px;height:6px;border-radius:50%;background:var(--pc);box-shadow:0 0 7px var(--pc);margin-left:2px}
+  .pm{font-size:10px;color:var(--muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pf{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:10px;color:var(--dim)}
+  .pf span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pf time{white-space:nowrap;font:9px var(--mono);padding-top:1px}
+  .bar{height:3px;border-radius:2px;background:var(--line);margin-top:7px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--pc);border-radius:2px}
+
+  /* latest */
+  .latest{border-left:1px solid var(--line);padding-left:15px;display:flex;flex-direction:column;min-width:0}
+  .lf{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.045);cursor:pointer}
+  .lf:hover .lf-text{color:#fff}
+  .lf-top{display:flex;align-items:baseline;gap:5px;font-size:10.5px;min-width:0}
+  .lf-part{font-weight:650;white-space:nowrap}
+  .lf-text{color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .lf time{margin-left:auto;color:var(--dim);font:9px var(--mono);white-space:nowrap;flex:0 0 auto}
+  .lf-detail{font-size:10px;color:var(--dim);margin-top:4px;line-height:1.35}
+  .all-flows{margin-top:auto;padding:11px 0 0;background:none;border:0;color:var(--blue);font-size:11px;text-align:left}
+  .all-flows:hover{text-decoration:underline}
+
+  /* drawer */
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:.2s;z-index:40}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(400px,94vw);background:#111316;border-left:1px solid var(--line2);transform:translateX(105%);transition:.22s;z-index:50;padding:18px 20px;overflow:auto}
+  .drawer.open{transform:none}
+  .drawer .close{float:right;background:none;border:0;color:var(--muted);font-size:20px;line-height:1;padding:0}
+  .drawer .dk{font-size:9px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-bottom:5px}
+  .drawer h2{margin:0 0 4px;font-size:16px;font-weight:650}
+  .drawer .dm{color:var(--muted);font-size:11px;margin-bottom:14px}
+  .drawer .dd{font-size:12px;line-height:1.55;color:var(--txt);margin-bottom:14px}
+  .drawer ul{margin:0;padding-left:18px;color:var(--muted);font-size:11px;line-height:1.7}
+  .drawer .listrow{border-top:1px solid var(--line);padding:8px 0;font-size:11px}
+  .drawer .listrow small{display:block;color:var(--dim);font:9px var(--mono);margin-top:3px}
+  .err{background:rgba(255,113,131,.1);border:1px solid rgba(255,113,131,.3);color:var(--red);padding:8px 10px;border-radius:7px;margin-bottom:12px;font-size:11px}
+
+  @media (max-width:1180px){
+    .flow-body{grid-template-columns:minmax(0,1fr) 270px;gap:11px}
+    .diagram{grid-template-columns:148px minmax(35px,1fr) minmax(240px,1fr)}
+    .meta{grid-template-columns:repeat(3,1fr);row-gap:12px}
+    .meta>div:nth-child(3){border-right:0}
+  }
+  @media (max-width:900px){
+    .flow-body{grid-template-columns:1fr}
+    .latest{border-left:0;border-top:1px solid var(--line);padding:13px 0 0}
+    .member-grid{grid-template-columns:repeat(2,1fr)}
+    .head-right{width:100%;margin:10px 0 0;justify-content:space-between}
+    .head{flex-wrap:wrap}
+  }
+  @media (max-width:560px){
+    .wrap{padding:13px 12px 20px}
+    .diagram{grid-template-columns:1fr;gap:12px;min-height:0}
+    #wires{display:none}
+    .actors{flex-direction:row;flex-wrap:wrap}
+    .actor{flex:1 1 120px;height:42px}
+    .meta{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="mark">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/>
+        <circle cx="17.5" cy="9.5" r="2.2"/><path d="M16 15.2a4.5 4.5 0 0 1 5.5 4.3"/>
+      </svg>
+    </div>
+    <div class="htext">
+      <h1 id="title">Dark mode for the settings page</h1>
+      <div class="badges" id="badges"></div>
+    </div>
+    <div class="head-right">
+      <span id="updated">Updated just now</span>
+      <button class="refresh" id="refresh" title="Refresh run data">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+        Refresh
+      </button>
+    </div>
+  </header>
+
+  <section class="meta" id="meta"></section>
+
+  <p class="why"><b id="whyIntro">Why this mode</b><span id="why"></span></p>
+
+  <section class="members">
+    <div class="sec">Members</div>
+    <div class="member-grid" id="members"></div>
+  </section>
+
+  <section class="flow-card">
+    <div class="flow-head">
+      <span class="sec">Data flow <span class="live"><i></i>LIVE</span></span>
+      <p class="flow-desc">Left: who takes part. Right: the parts of the collaboration mode. Lines show the latest flows; a moving dot means the last 30 seconds. Tap a part for its details.</p>
+    </div>
+    <div class="flow-body">
+      <div class="diagram" id="diagram">
+        <div class="actors" id="actors"></div>
+        <svg id="wires" aria-hidden="true"></svg>
+        <div class="parts" id="parts"></div>
+      </div>
+      <div class="latest">
+        <div class="sec">Latest flows</div>
+        <div id="latest-list" style="margin-top:6px"></div>
+        <button class="all-flows" id="all-flows">All flows (<span id="flow-count">68</span>) <span>→</span></button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer"></aside>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const NS='http://www.w3.org/2000/svg';
+let D=null, BASE=Date.now();
+
+// Standalone fallback so the file also works when opened directly in a browser.
+const FALLBACK={
+  title:'Dark mode for the settings page', team:'Team · MA-08', active:true, round:'Round 2 of 2', plansNeedApproval:true,
+  run:'RTEAMDEM01', lead:'Orchestrator', language:'English', created:'Nov 21, 04:24 PM',
+  lastChangeMs:9000, runningForMs:1200000, whyIntro:'Why this mode',
+  why:'Several roles touch shared files (API, UI, styles); they need a shared board and review.',
+  members:[
+    {name:'api',meta:'api · codex · gpt-5.1-codex',status:'working',icon:'bot',color:'#f0a24b'},
+    {name:'ui',meta:'ui · claude · haiku',status:'replaced',icon:'bot',color:'#d98a5b'},
+    {name:'tester',meta:'tester · gemini · gemini-2.5-pro',status:'idle',icon:'terminal',color:'#4c8bf5'},
+    {name:'ui 2',meta:'ui · claude · sonnet',status:'needs-you',icon:'bot',color:'#e07a5f'}],
+  actors:[
+    {name:'Orchestrator',sub:'lead',state:'lead',color:'#4c8bf5',icon:'crown'},
+    {name:'api',sub:'working',state:'working',color:'#f0a24b',icon:'bot'},
+    {name:'tester',sub:'idle',state:'idle',color:'#49c99a',icon:'terminal'},
+    {name:'ui 2',sub:'needs you',state:'needs-you',color:'#ef6f8e',icon:'bot'}],
+  parts:[
+    {id:'brief',name:'Brief',color:'#a78bfa',icon:'doc',meta:'confirmed · 4 acceptance criteria',last:'brief sent to ui 2',agoMs:600000,detail:'The shared brief is confirmed and has 4 acceptance criteria. It was sent to ui 2, who is now drafting the plan for T2.',bullets:['Scope: settings page dark mode','4 acceptance criteria confirmed','Delivered to ui 2']},
+    {id:'board',name:'Task board',color:'#4c8bf5',icon:'board',meta:'2 in progress · 1 to do · 2 done',last:'api took T4',agoMs:120000,barPct:40,detail:'Five tasks in the round: 2 in progress, 1 to do and 2 done. api just picked up T4 (boot script + cookie fallback).',bullets:['T4 · api · in progress','T2 · ui 2 · in progress','T3 · to do','T0 / T1 · done']},
+    {id:'approval',name:'Plan approval',color:'#f5a623',icon:'shield',meta:'1 waiting · 3 approved · 0 sent back',last:'Orchestrator approved the plan of T4',agoMs:36000,detail:'Plans are reviewed before work starts. The Orchestrator approved T4 with a note to add a test for the cookie fallback; T2 is still waiting.',bullets:['T4 · approved (with note)','T2 · waiting for approval','3 approved · 0 sent back']},
+    {id:'teamboard',name:'Team board',color:'#49c99a',icon:'chat',meta:'7 posts',last:'tester posted #7',agoMs:9000,dot:true,detail:'Shared message board for the round. tester posted update #7: fixtures are being drafted while T2 is pending.',bullets:['#7 · tester · update','#6 · api · T4 status','#5 · Orchestrator · review note']},
+    {id:'claims',name:'File claims',color:'#ef6f8e',icon:'lock',meta:'3 paths held',last:'tester was refused src/boot.ts',agoMs:19000,dot:true,detail:'Exclusive write locks on shared files. api holds src/boot.ts and index.html; tester was refused src/boot.ts.',bullets:['src/boot.ts · api','index.html · api','styles.css · ui 2','tester → src/boot.ts · refused']}],
+  wiring:{Orchestrator:['brief','board','approval','teamboard','claims'],api:['board','approval','teamboard','claims'],tester:['board','approval','teamboard','claims'],'ui 2':['brief','board','approval','teamboard','claims']},
+  hot:['tester>teamboard','api>claims','Orchestrator>approval','api>board'],
+  flows:[
+    {part:'teamboard',actor:'tester',agoMs:9000,actorColor:'#49c99a',text:'tester posted #7',detail:'update: Waiting for T2 before I write the E2E test; drafting the fixtures meanwhile.'},
+    {part:'claims',actor:'tester',agoMs:19000,actorColor:'#49c99a',text:'tester was refused src/boot.ts',detail:'held by api'},
+    {part:'claims',actor:'api',agoMs:27000,actorColor:'#f0a24b',text:'api claimed index.html'},
+    {part:'approval',actor:'Orchestrator',agoMs:36000,actorColor:'#4c8bf5',text:'Orchestrator approved the plan of T4',detail:'Yes. Add a test for the cookie fallback.'},
+    {part:'approval',actor:'api',agoMs:60000,actorColor:'#f0a24b',text:'api submitted a plan for T4',detail:'Move the boot script into <head> before the stylesheet link, and read the cookie mirror so it works before JS bulids load.'},
+    {part:'claims',actor:'api',agoMs:120000,actorColor:'#f0a24b',text:'api claimed src/boot.ts'},
+    {part:'board',actor:'api',agoMs:120000,actorColor:'#f0a24b',text:'api took T4'},
+    {part:'approval',actor:'Orchestrator',agoMs:120000,actorColor:'#4c8bf5',text:'orchestrator told that the plan of T2 waits'},
+    {part:'approval',actor:'ui 2',agoMs:120000,actorColor:'#ef6f8e',text:'ui 2 submitted a plan for T2',detail:'A segmented control (Light / Dark / System) in Appearance; optimistic...'}],
+  allFlows:68
+};
+FALLBACK.generatedAt=Date.now();
+
+const ICONS={
+  bot:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01M9 17h6"/></svg>',
+  terminal:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 9 3 3-3 3M13 15h4"/></svg>',
+  crown:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8Z"/></svg>',
+  doc:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>',
+  board:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg>',
+  shield:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>',
+  chat:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 15a3 3 0 0 1-3 3H9l-5 3V7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z"/></svg>',
+  lock:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'
+};
+const LOCK='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function rel(ms){const s=Math.max(0,Math.floor(ms/1000));if(s<5)return'just now';if(s<60)return s+'s ago';const m=Math.floor(s/60);if(m<60)return m+' min ago';return Math.floor(m/60)+' h ago'}
+function age(agoMs){return rel(Date.now()-BASE+agoMs)}
+function partById(id){return D.parts.find(p=>p.id===id)}
+function partColor(id){const p=partById(id);return p?p.color:'var(--muted)'}
+
+function render(){
+  if(!D)return;
+  $('#title').textContent=D.title;
+  $('#badges').innerHTML=
+    '<span class="badge b-team">'+esc(D.team)+'</span>'+
+    (D.active?'<span class="badge b-active"><i></i>Active</span>':'')+
+    '<span class="badge b-round">'+esc(D.round)+'</span>'+
+    (D.plansNeedApproval?'<span class="badge b-plan">'+LOCK+'plans need approval</span>':'');
+  $('#whyIntro').textContent=D.whyIntro;
+  $('#why').textContent=D.why;
+
+  $('#meta').innerHTML=[
+    ['Run',esc(D.run)],['Lead','<span class="lead-dot"></span>'+esc(D.lead)],['Language',esc(D.language)],
+    ['Created',esc(D.created)],['Last change','<span data-t="'+D.lastChangeMs+'">'+age(D.lastChangeMs)+'</span>'],
+    ['Running for','<span data-runfor>'+rel(D.runningForMs+(Date.now()-BASE))+'</span>']
+  ].map(([l,v])=>'<div><label>'+l+'</label><span class="v">'+v+'</span></div>').join('');
+
+  $('#members').innerHTML=D.members.map(m=>
+    '<div class="member" style="--ac:'+m.color+'"><div class="m-top">'+
+    '<span class="av">'+ICONS[m.icon]+'</span><span class="m-name">'+esc(m.name)+'</span>'+
+    '<span class="pill '+m.status+'">'+esc(m.status==='needs-you'?'needs you':m.status)+'</span></div>'+
+    '<div class="m-meta">'+esc(m.meta)+'</div></div>').join('');
+
+  $('#actors').innerHTML=D.actors.map(a=>
+    '<div class="actor" data-actor="'+esc(a.name)+'" style="--ac:'+a.color+'">'+
+    '<span class="ic">'+ICONS[a.icon]+'</span><b>'+esc(a.name)+'</b>'+
+    '<span class="sub">'+(a.state==='working'?'<span class="more">•••</span>':'')+
+    '<span class="dot '+a.state+'"></span>'+esc(a.sub)+'</span></div>').join('');
+
+  $('#parts').innerHTML=D.parts.map(p=>
+    '<div class="part" data-part="'+p.id+'" style="--pc:'+p.color+'">'+
+    '<div class="pt"><span class="pi">'+ICONS[p.icon]+'</span><span class="pn">'+esc(p.name)+'</span>'+
+    (p.dot?'<span class="p-live"></span>':'')+'<span class="p-chevr">›</span></div>'+
+    '<div class="pm">'+esc(p.meta)+'</div>'+
+    (p.barPct!=null?'<div class="bar"><i style="width:'+p.barPct+'%"></i></div>':'')+
+    '<div class="pf"><span>'+esc(p.last)+'</span><time data-t="'+p.agoMs+'">'+age(p.agoMs)+'</time></div></div>').join('');
+
+  $('#latest-list').innerHTML=D.flows.map((f,i)=>
+    '<div class="lf" data-flow="'+i+'"><div class="lf-top">'+
+    '<span class="lf-part" style="color:'+partColor(f.part)+'">'+esc(partById(f.part).name)+'</span>'+
+    '<span class="lf-text">· '+esc(f.text)+'</span>'+
+    '<time data-t="'+f.agoMs+'">'+age(f.agoMs)+'</time></div>'+
+    (f.detail?'<div class="lf-detail">'+esc(f.detail)+'</div>':'')+'</div>').join('');
+
+  $('#flow-count').textContent=D.allFlows;
+  requestAnimationFrame(drawWires);
+}
+
+function drawWires(){
+  const dg=$('#diagram');if(!dg||!D)return;
+  const r=dg.getBoundingClientRect();if(!r.width||!r.height)return;
+  const svg=$('#wires');svg.setAttribute('viewBox','0 0 '+r.width+' '+r.height);svg.innerHTML='';
+  const actors=$$('.actor',dg), pmap={};
+  $$('.part',dg).forEach(p=>pmap[p.dataset.part]=p);
+  actors.forEach(a=>{
+    const key=a.dataset.actor, actor=D.actors.find(x=>x.name===key);
+    (D.wiring[key]||[]).forEach(pid=>{
+      const p=pmap[pid];if(!p)return;
+      const ar=a.getBoundingClientRect(),pr=p.getBoundingClientRect();
+      const x1=ar.right-r.left+3,y1=ar.top-r.top+ar.height/2;
+      const x2=pr.left-r.left-3,y2=pr.top-r.top+pr.height/2;
+      const bend=Math.max(22,(x2-x1)*.55);
+      const d='M'+x1.toFixed(1)+','+y1.toFixed(1)+' C'+(x1+bend).toFixed(1)+','+y1.toFixed(1)+' '+(x2-bend).toFixed(1)+','+y2.toFixed(1)+' '+x2.toFixed(1)+','+y2.toFixed(1);
+      const path=document.createElementNS(NS,'path');
+      path.setAttribute('d',d);path.setAttribute('fill','none');path.setAttribute('stroke',actor.color);
+      path.setAttribute('stroke-width','1');path.setAttribute('opacity','.42');svg.appendChild(path);
+      if((D.hot||[]).includes(key+'>'+pid)){
+        const dot=document.createElementNS(NS,'circle');
+        dot.setAttribute('r','2.5');dot.setAttribute('fill',actor.color);
+        dot.style.filter='drop-shadow(0 0 4px '+actor.color+')';
+        const an=document.createElementNS(NS,'animateMotion');
+        an.setAttribute('dur',(2.2+Math.random()*1.8).toFixed(1)+'s');
+        an.setAttribute('repeatCount','indefinite');an.setAttribute('path',d);
+        an.setAttribute('begin',(-Math.random()*3).toFixed(1)+'s');
+        dot.appendChild(an);svg.appendChild(dot);
+      }
+    });
+  });
+}
+
+function openDrawer(html){$('#drawer').innerHTML='<button class="close" id="closeDrawer">×</button>'+html;$('#drawer').classList.add('open');$('#scrim').classList.add('on');$('#closeDrawer').onclick=closeDrawer}
+function closeDrawer(){$('#drawer').classList.remove('open');$('#scrim').classList.remove('on')}
+
+function openPart(pid){
+  const p=partById(pid);if(!p)return;
+  openDrawer('<div class="dk">Collaboration part</div><h2 style="color:'+p.color+'">'+esc(p.name)+'</h2>'+
+    '<div class="dm">'+esc(p.meta)+'</div><p class="dd">'+esc(p.detail)+'</p>'+
+    '<div class="dk">Latest activity</div><div class="listrow" style="color:'+p.color+'">'+esc(p.last)+'<small>'+age(p.agoMs)+'</small></div>'+
+    '<div class="dk" style="margin-top:14px">Details</div><ul>'+p.bullets.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul>');
+}
+
+function openFlow(i){
+  const f=D.flows[i];if(!f)return;
+  openDrawer('<div class="dk">Flow #'+(i+1)+'</div><h2 style="color:'+partColor(f.part)+'">'+esc(partById(f.part).name)+'</h2>'+
+    '<div class="dm">'+esc(f.actor)+' · '+age(f.agoMs)+'</div><p class="dd">'+esc(f.text)+'</p>'+
+    (f.detail?'<div class="dk">Message</div><p class="dd">'+esc(f.detail)+'</p>':'')+
+    '<button class="all-flows" id="toPart">Open '+esc(partById(f.part).name)+' →</button>');
+  $('#toPart').onclick=()=>openPart(f.part);
+}
+
+function openAll(){
+  const extra=[];
+  for(let i=D.flows.length;i<D.allFlows;i++){
+    const p=D.parts[i%D.parts.length],a=D.actors[i%D.actors.length];
+    extra.push({part:p.id,actor:a.name,color:p.color,text:'update on '+p.name.toLowerCase(),agoMs:(i+1)*180000});
+  }
+  const all=D.flows.map(f=>({part:f.part,color:partColor(f.part),text:f.actor+' · '+f.text,agoMs:f.agoMs})).concat(extra);
+  openDrawer('<div class="dk">Run '+esc(D.run)+'</div><h2>All flows ('+D.allFlows+')</h2>'+
+    '<div class="dm">Every signal recorded in this round, newest first.</div>'+
+    all.map(f=>'<div class="listrow" style="color:'+f.color+'">'+esc(f.text)+'<small>'+rel(f.agoMs)+'</small></div>').join(''));
+}
+
+async function load(){
+  try{
+    if(window.orca?.plugin){
+      D=await orca.plugin.request('team.data');
+      BASE=D.generatedAt||Date.now();
+    }else{D=FALLBACK;BASE=FALLBACK.generatedAt||Date.now()}
+    render();
+  }catch(e){
+    $('.wrap').insertAdjacentHTML('afterbegin','<div class="err">'+esc(e.message||e)+' · showing demo snapshot</div>');
+    D=FALLBACK;BASE=Date.now();render();
+  }
+}
+
+$('#refresh').onclick=async()=>{const b=$('#refresh');b.classList.add('spin');await load();setTimeout(()=>b.classList.remove('spin'),550)};
+document.addEventListener('click',e=>{
+  const p=e.target.closest('[data-part]');if(p){openPart(p.dataset.part);return}
+  const f=e.target.closest('[data-flow]');if(f){openFlow(+f.dataset.flow);return}
+});
+$('#scrim').onclick=closeDrawer;
+$('#all-flows').onclick=openAll;
+window.addEventListener('resize',()=>requestAnimationFrame(drawWires));
+
+setInterval(()=>{
+  if(!D)return;
+  $$('[data-t]').forEach(el=>{el.textContent=age(+el.dataset.t)});
+  const rf=$('[data-runfor]');if(rf)rf.textContent=rel(D.runningForMs+(Date.now()-BASE));
+  const up=$('#updated');if(up)up.textContent=rel(Date.now()-BASE)==='just now'?'Updated just now':'Updated '+rel(Date.now()-BASE);
+},1000);
+
+if(window.orca?.plugin){orca.plugin.on('team.updated',load);setInterval(load,35000)}
+load();
+</script>
+</body>
+</html>

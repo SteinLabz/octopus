@@ -1,0 +1,32 @@
+{
+  "manifestVersion": 2,
+  "id": "team-mode-panel",
+  "name": "Team Mode · Run Monitor",
+  "version": "0.1.0",
+  "description": "Live dashboard for round-based multi-agent collaboration: members, data-flow map, task board, plan approvals and file claims.",
+  "engines": {
+    "orca": ">=1.4.247"
+  },
+  "execution": "trusted-worker",
+  "pluginApi": 1,
+  "main": "src/worker.ts",
+  "contributes": {
+    "panels": [
+      {
+        "id": "team-run",
+        "title": "Team mode",
+        "icon": "bot",
+        "entry": "panel/index.html"
+      }
+    ],
+    "events": [
+      { "on": "agent.status.changed" },
+      { "on": "workspace.changed" }
+    ]
+  },
+  "capabilities": [
+    { "kind": "agent:read" },
+    { "kind": "workspace:read" },
+    { "kind": "storage:own" }
+  ]
+}
