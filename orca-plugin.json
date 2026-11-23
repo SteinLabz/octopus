@@ -3,7 +3,7 @@
   "manifestVersion": 2,
   "id": "octopus",
   "name": "Octopus",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Sidebar dashboard for round-based multi-agent runs: members, a live data-flow map, task board, plan approvals, team board and file claims. Ships with a demo run and a documented data contract so you can plug in your own team runtime.",
   "author": {
     "name": "SteinLabz",
@@ -26,7 +26,7 @@
     }
   ],
   "engines": {
-    "orca": ">=1.4.247"
+    "orca": ">=1.4.260"
   },
   "execution": "trusted-worker",
   "pluginApi": 1,
