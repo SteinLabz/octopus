@@ -36,6 +36,8 @@
   .refresh:hover{border-color:var(--blue);color:var(--blue)}
   .refresh svg{transition:transform .5s}
   .refresh.spin svg{transform:rotate(360deg)}
+  .help{width:29px;height:29px;border-radius:7px;background:var(--card);border:1px solid var(--line2);color:var(--muted);font:700 13px var(--mono);display:grid;place-items:center;padding:0}
+  .help:hover{color:var(--blue);border-color:var(--blue)}
 
   /* stats */
   .meta{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--line);padding:13px 0 14px}
@@ -133,6 +135,9 @@
   .drawer ul{margin:0;padding-left:18px;color:var(--muted);font-size:11px;line-height:1.7}
   .drawer .listrow{border-top:1px solid var(--line);padding:8px 0;font-size:11px}
   .drawer .listrow small{display:block;color:var(--dim);font:9px var(--mono);margin-top:3px}
+  .drawer code{font:10px var(--mono);color:var(--cyan);background:rgba(84,199,236,.08);padding:1px 4px;border-radius:3px}
+  .drawer .dk{margin-top:16px}
+  .drawer .dk:first-of-type{margin-top:0}
   .err{background:rgba(255,113,131,.1);border:1px solid rgba(255,113,131,.3);color:var(--red);padding:8px 10px;border-radius:7px;margin-bottom:12px;font-size:11px}
 
   @media (max-width:1180px){
@@ -172,6 +177,7 @@
       <div class="badges" id="badges"></div>
     </div>
     <div class="head-right">
+      <button class="help" id="help" title="What is Octopus and how do I use it?">?</button>
       <span id="updated">Updated just now</span>
       <button class="refresh" id="refresh" title="Refresh run data">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
@@ -388,6 +394,33 @@ function openFlow(i){
   $('#toPart').onclick=()=>openPart(f.part);
 }
 
+function openHelp(){
+  const rows = [
+    '<div class="dk">Guide</div><h2>Octopus</h2>',
+    '<div class="dm">A live view of the Orca workspace you are focused on.</div>',
+    '<p class="dd">Octopus turns your focused workspace into one screen: who is working, which worktrees exist, what needs your review, and how activity flows between them. It reads Orca directly — no API key, no config file.</p>',
+    '<div class="dk">What you can do</div>',
+    '<ul><li>See your real agents, their state and their current task.</li><li>Spot worktrees with unread messages and blocked agents.</li><li>Follow the latest flows between agents and the shared parts.</li><li>Click a part, a flow, or <b>All flows</b> to open its details.</li><li>Refresh at any time; it also updates on agent and workspace events.</li></ul>',
+    '<div class="dk">LIVE or DEMO</div>',
+    '<p class="dd"><b style="color:var(--green)">LIVE</b> (green dot): real data from your workspace. <b style="color:var(--amber)">DEMO</b> (amber dot + banner): the bundled example, because no workspace is focused yet.</p>',
+    '<div class="dk">Make it LIVE in 4 steps</div>',
+    '<ul><li>Open a Git worktree or folder workspace in Orca.</li><li>Open at least one agent there (a chat or a terminal).</li><li>Click that workspace in Orca\u2019s left sidebar so it has focus.</li><li>Press <b>Refresh</b> here. The badge turns green.</li></ul>',
+    '<div class="dk">What the five parts show</div>',
+    '<ul><li><b>Brief</b> — focused workspace name, branch and terminals.</li><li><b>Task board</b> — your worktrees, their state and unread flags.</li><li><b>Plan approval</b> — blocked agents and worktrees waiting on you.</li><li><b>Team board</b> — agents with their live state and task.</li><li><b>File claims</b> — the Git branch held by each worktree.</li></ul>',
+    '<div class="dk">Reading the map</div>',
+    '<p class="dd">Left: actors (your agents). Right: the five parts. Each coloured line is the latest flow from an actor into a part; a moving dot means it happened in the last 30 seconds. Tap any part or flow for details.</p>',
+    '<div class="dk">Configuration</div>',
+    '<ul><li>There is no settings page — <b>focus decides the source</b>.</li><li>Permissions live in Settings → Plugins → Octopus (<code>agent:read</code>, <code>workspace:read</code>).</li><li>Ask an agent: “Focus the <b>news</b> workspace in Orca, open an agent there, then refresh Octopus.”</li><li>Developers can change the mapping in <code>src/live.ts</code>.</li></ul>',
+    '<div class="dk">Useful commands</div>',
+    '<div class="listrow">orca plugin open local.octopus --panel team-run<small>open this panel</small></div>',
+    '<div class="listrow">orca plugin dev request . team.data --json<small>inspect the live snapshot</small></div>',
+    '<div class="listrow">orca plugin logs local.octopus --json<small>check for read errors</small></div>',
+    '<div class="dk">Still seeing DEMO?</div>',
+    '<p class="dd">Focus the workspace in Orca\u2019s sidebar, open an agent in it, press Refresh, and confirm both permissions are enabled.</p>'
+  ];
+  openDrawer(rows.join(''));
+}
+
 function openAll(){
   const extra=[];
   for(let i=D.flows.length;i<D.allFlows;i++){
@@ -420,6 +453,7 @@ document.addEventListener('click',e=>{
 });
 $('#scrim').onclick=closeDrawer;
 $('#all-flows').onclick=openAll;
+$('#help').onclick=openHelp;
 window.addEventListener('resize',()=>requestAnimationFrame(drawWires));
 
 setInterval(()=>{

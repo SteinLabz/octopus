@@ -1,41 +1,55 @@
 # Octopus
 
-An [Orca](https://github.com/stablyai/orca) sidebar panel for round-based multi-agent
-collaboration. It shows the members of a run, a **Data Flow** map between the actors and the
-shared parts (Brief, Task board, Plan approval, Team board, File claims), and a feed of the
-latest flows. Clicking a part, a flow, or *All flows (68)* opens a detail drawer.
+A sidebar panel for [Orca](https://github.com/stablyai/orca) that turns the workspace you are
+focused on into one screen: **who is working, which worktrees exist, what needs your review, and
+how activity flows between them.**
 
-Octopus reads **your real focused Orca workspace first**: `workspace.readContext`,
-`workspace.list` and `agents.list` feed the members, task board, approvals, team board and file
-claims. When Orca has no workspace open it falls back to a bundled demo run (`RTEAMDEM01`), so
-the panel is never blank. The mapping lives in `src/live.ts`; swap it for another source and the
-panel HTML does not change.
+It reads Orca directly (`workspace.readContext`, `workspace.list`, `agents.list` and live agent /
+workspace events). No API key, no account, no config file, no network calls.
 
 - Directory page: https://orca.dev/plugins/SteinLabz/octopus
 - License: MIT
 
-## Install
+---
 
-From the directory page above, once the `v1.2.0` release is indexed, copy the install URL and
-paste it into Orca. Or install straight from GitHub:
+## 1. What is it for?
 
-```sh
-orca plugin install SteinLabz/octopus --json
-```
+When several agents and worktrees are open, it is easy to lose track of the state of the work.
+Octopus gives you a single, glanceable answer to:
 
-Orca asks for approval before running it: the plugin runs a trusted worker and subscribes to
-agent and workspace status changes so the panel can refresh. It requests only `agent:read` and
-`workspace:read`. No network calls, no analytics, no secrets. Requires Orca 1.4.260+.
+- Which agents are working, blocked, waiting or already done.
+- Which worktrees exist, which ones are active and which have messages waiting for you.
+- What the most recent activity was and which part of the work it touched.
+- Where a detail lives: task, plan, board post or branch.
 
-## Real data vs demo — read this first
+It is a **read-only monitor**. Octopus never launches agents, changes files, sends messages or
+makes decisions for you.
+
+## 2. What you can do with it
+
+- **See your real agents** in the focused workspace, with their CLI, state and dispatched task.
+- **Spot what needs you**: blocked agents and worktrees with unread messages are collected in
+  *Plan approval*, and the header badge turns on.
+- **See every worktree** with its Git branch, state and unread flag in *Task board* and
+  *File claims*.
+- **Follow a live Data Flow map**: coloured lines connect each actor to the part it last wrote
+  into; a moving dot means the flow happened in the last 30 seconds.
+- **Open details**: click any part (*Brief*, *Task board*, *Plan approval*, *Team board*,
+  *File claims*), any item in *Latest flows*, or **All flows** to see the underlying records in a
+  drawer.
+- **Refresh manually** at any time. The panel also refreshes itself when an agent changes state
+  or the focused workspace changes.
+- **Read the built-in guide**: press the **?** button in the header. It explains every part, the
+  LIVE/DEMO indicator, the four steps to real data and the configuration options.
+
+## 3. Quick start: real data, not a mockup
 
 Octopus always tells you which data you are looking at:
 
-- **LIVE** (green dot beside *DATA FLOW*): your real workspace. The *Fuente de datos* line says
-  "Datos reales del workspace enfocado de Orca…", the title is your workspace name, and the
-  badge shows its Git branch.
-- **DEMO** (amber dot plus a banner): the bundled example run. Nothing is being read from your
-  machine yet.
+| Indicator | Meaning |
+| --- | --- |
+| **LIVE**, green dot beside *DATA FLOW* | Real data from your focused Orca workspace. The title is your workspace name and the badge shows its branch. |
+| **DEMO**, amber dot + banner | Bundled example run. Nothing is being read from your machine yet. |
 
 To go from DEMO to LIVE:
 
@@ -49,27 +63,93 @@ To go from DEMO to LIVE:
 Nothing else is needed: no API key, no config file, no extra permission. The two permissions you
 already approved on install (`agent:read` and `workspace:read`) are enough.
 
-| What you see in Octopus | Real source |
+## 4. How to read the panel
+
+**Header** — workspace name, its Git branch, number of agents, and the "needs approval" badge
+when something is waiting on you.
+
+**Fuente de datos** — says whether the source is your live workspace or the demo snapshot.
+
+**Members** — one card per agent in the focused workspace: name, CLI, state and current task.
+
+**Data Flow** — the main map:
+
+- **Left:** actors (your agents).
+- **Right:** the five parts of the collaboration.
+- **Lines:** the latest flow from that actor into that part, coloured per actor.
+- **Moving dot:** that flow happened within the last 30 seconds.
+
+**The five parts**
+
+| Part | What it shows with real data |
 | --- | --- |
-| Title / branch badge | Focused workspace name and Git branch |
-| Members | Agents in that workspace: CLI, state and dispatched task |
-| Brief | Terminals open in the focused workspace |
-| Task board | All worktrees, with state and unread flag |
-| Plan approval | Blocked agents + worktrees with unread messages |
-| Team board | Agents with their live state |
-| File claims | Git branches held by each worktree |
-| Latest flows | Agent status changes and worktree activity |
+| Brief | Focused workspace name, Git branch and terminal count. |
+| Task board | All worktrees with their state and unread flag, plus an activity bar. |
+| Plan approval | Blocked agents and worktrees with unread messages — what Orca marks as "needs you". |
+| Team board | Agents with their live state and dispatched task. |
+| File claims | The Git branch held by each worktree. |
 
-Still DEMO? Focus the workspace in the sidebar and press Refresh; open an agent there; then check
-`orca plugin logs local.octopus --json` and confirm both permissions are enabled under
-Settings → Plugins → Octopus.
+**Latest flows** — the newest signals, newest first, coloured by the part they touched. Click one
+to see its message and open the related part.
 
-## What the data looks like
+**All flows (N)** — every recorded signal for this snapshot, in one drawer.
 
-`team.data` returns the `Snapshot` from `src/snapshot.ts` plus `generatedAt`. In live mode
-`src/live.ts` fills it from Orca: agents → members/actors, worktrees → Task board and File
-claims, unread workspaces and blocked agents → Plan approval, agent state changes → Team board
-and flows. Times are relative offsets (`agoMs`) so the panel can tick them live:
+## 5. Configuration
+
+**There is no settings page. Focus is the configuration.** Octopus always reads the workspace
+that Orca currently has in focus, so changing what you look at is done from Orca's sidebar.
+
+- **Permissions** — Settings → Plugins → Octopus. It asks only for `agent:read` and
+  `workspace:read`. If either is disabled, the panel falls back to DEMO.
+- **With an agent** — you can ask the agent that is already working in Orca, for example:
+
+  > Focus the `news` workspace in Orca, open an agent in it, then refresh the Octopus panel.
+
+  Octopus will pick up that workspace on the next refresh or event.
+- **Without an agent** — click the workspace in Orca's left sidebar, open an agent there, press
+  **Refresh** in Octopus.
+- **Advanced / developers** — the mapping from Orca data to the panel lives in `src/live.ts`.
+  Replace `buildLive()` with another source and the HTML panel does not change. In a development
+  folder the plugin reloads on save.
+- **Installed vs development copy** — the installed plugin is `steinlabz.octopus`; a local
+  development folder appears as `local.octopus` and overrides the installed copy with the same key.
+
+## 6. Install and commands
+
+From the directory page, copy the install URL, or install from GitHub:
+
+```sh
+orca plugin install SteinLabz/octopus --json
+```
+
+Useful commands:
+
+```sh
+orca plugin open local.octopus --panel team-run    # open the panel
+orca plugin dev request . team.data --json         # inspect the snapshot the panel receives
+orca plugin logs local.octopus --json              # check for read errors
+orca plugin list --json                            # status, version, permissions
+```
+
+Standalone preview: open `panel/index.html` in any browser. Without Orca it shows the bundled DEMO
+snapshot, including the same amber banner.
+
+## 7. Troubleshooting
+
+| Symptom | What to do |
+| --- | --- |
+| Still shows DEMO | Focus a workspace in Orca's sidebar, open an agent in it, press Refresh. |
+| Title is "Workspace de Orca" | No workspace is focused; click one in the sidebar. |
+| Members says "sin agentes" | Open a chat or terminal agent in the focused workspace. |
+| LIVE but stale | Press Refresh; the panel also reloads on `agent.status.changed` and `workspace.changed`. |
+| Read error | Run `orca plugin logs local.octopus --json`. |
+| Unknown method warning | Update Orca to 1.4.260+ (the minimum this version supports). |
+
+## 8. Reference (developers)
+
+`team.data` returns a `Snapshot` plus `generatedAt`. In live mode `src/live.ts` fills it from
+Orca; without a workspace it falls back to `SNAPSHOT` from `src/snapshot.ts`. Times are relative
+offsets (`agoMs`) so the panel can tick them live.
 
 ```ts
 {
@@ -81,70 +161,35 @@ and flows. Times are relative offsets (`agoMs`) so the panel can tick them live:
   actors:   [{ name, sub, state, color, icon }],
   parts:    [{ id, name, color, icon, meta, last, agoMs, barPct?, dot?, detail, bullets }],
   wiring:   { '<actor name>': ['brief', 'board', 'approval', 'teamboard', 'claims'] },
-  hot:      ['tester>teamboard', ...],   // flows with an animated dot (last 30 s)
+  hot:      ['<actor>><part>', ...],   // flows with an animated dot (last 30 s)
   flows:    [{ part, actor, text, agoMs, detail? }],
-  allFlows: 68
+  allFlows: number
 }
 ```
 
 Part ids: `brief`, `board`, `approval`, `teamboard`, `claims`.
 
-## Layout
-
 ```
-orca-plugin.json        manifest (panel + worker, metadata, cover/screenshot)
+orca-plugin.json        manifest (panel, worker, metadata, cover/screenshot)
 assets/                 icon, cover and screenshot for the directory page
-panel/index.html        the complete UI: inline CSS, SVG wiring, interactions, demo fallback
-src/snapshot.ts         fallback demo run and the shared types
+panel/index.html        complete UI, help guide, demo fallback
+src/snapshot.ts         fallback demo snapshot and shared types
 src/live.ts             maps the real Orca workspace into the Snapshot
-src/worker.ts           serves team.data (live, then demo), posts team.updated
-src/protocol.ts         panel <-> worker request/event contract
-src/worker.test.ts      worker test (orca/testing)
+src/worker.ts           serves team.data, posts team.updated
+src/protocol.ts         panel <-> worker contract
+src/worker.test.ts      worker tests (orca/testing)
 src/panel.check.ts      panel check scenario
 ```
-
-## Develop
 
 ```sh
 orca plugin validate .
 orca plugin test .
 orca plugin check .
-orca plugin dev watch .    # loads the folder into Orca and prints reloads/logs; Ctrl-C unloads
-orca plugin open local.octopus --panel team-run
+orca plugin dev watch .
 ```
 
-Useful commands:
-
-```sh
-orca plugin dev request . team.data --json    # inspect the live snapshot
-orca plugin logs local.octopus --json
-orca plugin inspect . --json                  # contributions and access
-orca plugin shot local.octopus --panel team-run --json
-```
-
-## Standalone preview
-
-`panel/index.html` also works on its own: with no Orca runtime it falls back to the embedded
-demo snapshot, so the whole dashboard renders in any browser.
-
-```sh
-start panel/index.html          # Windows
-open panel/index.html           # macOS
-xdg-open panel/index.html       # Linux
-```
-
-## Release
-
-The directory page picks up a release from a `vX.Y.Z` git tag:
-
-```sh
-orca plugin validate .
-git tag -a v1.2.0 -m v1.2.0
-git push origin v1.2.0
-```
-
-Then check https://orca.dev/plugins/SteinLabz/octopus (the indexer runs every 30 minutes and
-GitHub search can take a few more minutes to see a new topic).
+Release: bump `version` in `orca-plugin.json`, commit, then tag and push `vX.Y.Z`. The directory
+indexer runs every 30 minutes.
 
 ## License
 
